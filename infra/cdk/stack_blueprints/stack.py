@@ -1,10 +1,13 @@
 """Main python file_key for adding resources to the application stack."""
 from typing import Dict, Any
 import aws_cdk
+import aws_cdk.aws_kms as kms
+import aws_cdk.aws_sns as sns
 from constructs import Construct
 
 from .iam_construct import IAMConstruct
 from .kms_construct import KMSConstruct
+from .sns_construct import SNSConstruct
 
 
 class MainProjectStack(aws_cdk.Stack):
@@ -30,3 +33,25 @@ class MainProjectStack(aws_cdk.Stack):
             policy_doc=kms_pol_doc
         )
         print(kms_key, env)
+
+        # SNS Infra Setup -----------------------------------------------------
+        sns_topic = MainProjectStack.setup_sns_topic(
+            config,
+            kms_key,
+            stack
+        )
+        print(sns_topic)
+
+    @staticmethod
+    def setup_sns_topic(
+            config: dict,
+            kms_key: kms.Key,
+            stack: aws_cdk.Stack) -> sns.Topic:
+        """Set up the SNS Topic and returns the SNS Topic Object."""
+        sns_topic = SNSConstruct.create_sns_topic(
+            stack=stack,
+            config=config,
+            kms_key=kms_key
+        )
+        SNSConstruct.subscribe_email(config=config, topic=sns_topic)
+        return sns_topic
