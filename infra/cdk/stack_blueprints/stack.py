@@ -29,4 +29,4 @@ class MainProjectStack(aws_cdk.Stack):
             config=config,
             policy_doc=kms_pol_doc
         )
-        print(kms_key)
+        print(kms_key, env)
