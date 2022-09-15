@@ -3,11 +3,13 @@ from typing import Dict, Any
 import aws_cdk
 import aws_cdk.aws_kms as kms
 import aws_cdk.aws_sns as sns
+import aws_cdk.aws_iam as iam
 from constructs import Construct
 
 from .iam_construct import IAMConstruct
 from .kms_construct import KMSConstruct
 from .sns_construct import SNSConstruct
+from .s3_construct import S3Construct
 
 
 class MainProjectStack(aws_cdk.Stack):
@@ -42,6 +44,15 @@ class MainProjectStack(aws_cdk.Stack):
         )
         print(sns_topic)
 
+        # IAM Role Setup --------------------------------------------------------
+        stack_role = MainProjectStack.create_stack_role(
+            config=config,
+            stack=stack,
+            kms_key=kms_key,
+            sns_topic=sns_topic
+        )
+        print(stack_role)
+
     @staticmethod
     def setup_sns_topic(
             config: dict,
@@ -55,3 +66,33 @@ class MainProjectStack(aws_cdk.Stack):
         )
         SNSConstruct.subscribe_email(config=config, topic=sns_topic)
         return sns_topic
+
+    @staticmethod
+    def create_stack_role(
+        config: dict,
+        stack: aws_cdk.Stack,
+        kms_key: kms.Key,
+        sns_topic: sns.Topic
+    ) -> iam.Role:
+        """Create the IAM role."""
+
+        stack_policy = IAMConstruct.create_managed_policy(
+            stack=stack,
+            config=config,
+            policy_name="mainStack",
+            statements=[
+                KMSConstruct.get_kms_key_encrypt_decrypt_policy(
+                    [kms_key.key_arn]
+                ),
+                S3Construct.get_s3_object_policy([config['global']['bucket_arn']]),
+                SNSConstruct.get_sns_publish_policy(sns_topic.topic_arn)
+            ]
+        )
+        stack_role = IAMConstruct.create_role(
+            stack=stack,
+            config=config,
+            role_name="mainStack",
+            assumed_by=["s3", "lambda"]
+        )
+        stack_role.add_managed_policy(policy=stack_policy)
+        return stack_role
