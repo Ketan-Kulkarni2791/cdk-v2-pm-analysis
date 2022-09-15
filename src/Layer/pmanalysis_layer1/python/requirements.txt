@@ -1,0 +1,6 @@
+aws-psycopg2==1.2.1
+defusedxml==0.7.1
+openpyxl==3.0.9
+pandas==1.4.1
+fastparquet==0.8.0
+s3fs==2022.2.0

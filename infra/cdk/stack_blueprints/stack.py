@@ -4,12 +4,14 @@ import aws_cdk
 import aws_cdk.aws_kms as kms
 import aws_cdk.aws_sns as sns
 import aws_cdk.aws_iam as iam
+import aws_cdk.aws_lambda as _lambda
 from constructs import Construct
 
 from .iam_construct import IAMConstruct
 from .kms_construct import KMSConstruct
 from .sns_construct import SNSConstruct
 from .s3_construct import S3Construct
+from .lambda_layer_construct import LambdaLayerConstruct
 
 
 class MainProjectStack(aws_cdk.Stack):
@@ -52,6 +54,12 @@ class MainProjectStack(aws_cdk.Stack):
             sns_topic=sns_topic
         )
         print(stack_role)
+
+        # Lambda Layers --------------------------------------------------------
+        layer = MainProjectStack.create_layers_for_lambdas(
+            stack=stack,
+            config=config
+        )
 
     @staticmethod
     def setup_sns_topic(
@@ -96,3 +104,36 @@ class MainProjectStack(aws_cdk.Stack):
         )
         stack_role.add_managed_policy(policy=stack_policy)
         return stack_role
+
+    @staticmethod
+    def create_layers_for_lambdas(
+            stack: aws_cdk.Stack,
+            config: dict) -> Dict[str, _lambda.LayerVersion]:
+        """Method to create layers."""
+        layers = {}
+        # requirement layer for general ----------------------------------------------------
+        layers["pmanalysis_layer1"] = LambdaLayerConstruct.create_lambda_layer(
+            stack=stack,
+            config=config,
+            layer_name="pmanalysis_layer1",
+            compatible_runtimes=[
+                _lambda.Runtime.PYTHON_3_8
+            ]
+        )
+        layers["pmanalysis_layer2"] = LambdaLayerConstruct.create_lambda_layer(
+            stack=stack,
+            config=config,
+            layer_name="pmanalysis_layer2",
+            compatible_runtimes=[
+                _lambda.Runtime.PYTHON_3_8
+            ]
+        )
+        layers["pmanalysis_layer3"] = LambdaLayerConstruct.create_lambda_layer(
+            stack=stack,
+            config=config,
+            layer_name="pmanalysis_layer3",
+            compatible_runtimes=[
+                _lambda.Runtime.PYTHON_3_8
+            ]
+        )
+        return layers
