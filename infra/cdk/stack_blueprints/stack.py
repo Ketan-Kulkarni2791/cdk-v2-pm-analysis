@@ -60,6 +60,7 @@ class MainProjectStack(aws_cdk.Stack):
             stack=stack,
             config=config
         )
+        print(layer)
 
     @staticmethod
     def setup_sns_topic(
